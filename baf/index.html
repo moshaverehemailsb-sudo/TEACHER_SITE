@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="باف؛ مشاهده نظر دانش‌آموزان و مقایسه‌ی اساتید کنکور">
+<title>باف | پیدا کردن استاد</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+<body>
+<header class="hd"><div><a class="logo" href="#/">باف</a><nav class="nav"><a href="#/">اساتید</a><a href="#" onclick="toast('بخش منابع به‌زودی');return false">منابع</a><a href="#" onclick="toast('فرم ثبت نظر به‌زودی');return false">ثبت نظر</a></nav><button class="ico" onclick="theme()" aria-label="تغییر تم">◐</button></div></header>
+<main>
+<div id="home">
+<section class="hero"><h1>استاد مناسب خودت رو <em>پیدا کن</em></h1><p>تجربه‌ی دانش‌آموزها رو بخون، مقایسه کن و با خیال راحت انتخاب کن.</p>
+<div class="search"><input id="q" placeholder="نام استاد یا درس؛ مثلاً فیزیک یا شجاعی" oninput="flt()" aria-label="جست‌وجو"><button onclick="flt()">جست‌وجو</button></div></section>
+<div class="sh"><div><h2>مقایسه‌های پرطرفدار</h2><div class="mut">ببین بچه‌ها بین کدوم استادها مقایسه می‌کنن</div></div></div>
+<div class="stage" id="stage"><button class="arr" style="right:10px" onclick="go(-1)" aria-label="سمت راست">‹</button><button class="arr" style="left:10px" onclick="go(1)" aria-label="سمت چپ">›</button></div>
+<div class="sh"><h2>پیدا کردن استاد</h2><span class="mut" id="cnt"></span></div>
+<div class="chips" id="chips"></div><div class="more" id="more"></div><div class="chips" id="chips2"></div>
+<div class="grid" id="grid"></div><button class="b2" id="loadmore" style="display:none;margin:16px auto 0;padding:9px 22px" onclick="shown+=PG;renderCards()"></button><div class="empty" id="empty">استادی با این مشخصات پیدا نشد.</div><p class="mut" style="text-align:center;margin-top:28px">امتیازها و نظرها فعلاً نمونه‌ی آزمایشی هستند.</p>
+</div>
+<div id="profile" class="pw" style="display:none"></div>
+</main>
+<div class="bar" id="bar"><div><b id="bt"></b><br><span id="bn" class="mut"></span></div><button class="mut" onclick="sel=[];refresh()">پاک کردن</button><button class="b1" onclick="showCmp(sel)">مقایسه ←</button></div>
+<div class="ov" id="ov" onclick="if(event.target===this)this.classList.remove('on')"><div class="box" role="dialog" aria-modal="true"><h3>مقایسه‌ی استادها</h3><div class="tw" id="cmp"></div><button class="b1" style="width:100%;margin-top:14px;padding:11px" onclick="ov.classList.remove('on')">بستن</button></div></div>
+<div class="toast" id="toast"></div>
+<script src="js/data/teachers.js"></script>
+<script src="js/data/demo.js"></script>
+<script src="js/data/filters.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/state.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/carousel.js"></script>
+<script src="js/home.js"></script>
+<script src="js/compare.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -5,9 +5,11 @@
     ForeignKey,
     Index,
     Integer,
+    SmallInteger,
     String,
     Table,
     Text,
+    false,
     true,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -38,6 +40,12 @@ class Subject(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    sort_order: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, server_default="0"
+    )
+    is_featured: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=false()
+    )
 
     teachers: Mapped[list["Teacher"]] = relationship(
         secondary=teacher_subjects, back_populates="subjects"
@@ -54,6 +62,9 @@ class Teacher(TimestampMixin, Base):
     profile_image_url: Mapped[str | None] = mapped_column(String(500))
     short_description: Mapped[str | None] = mapped_column(String(300))
     bio: Mapped[str | None] = mapped_column(Text)
+    teaching_style: Mapped[str | None] = mapped_column(String(100))
+    suitable_level: Mapped[str | None] = mapped_column(String(100))
+    normalized_search: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=true()
     )
@@ -64,6 +75,26 @@ class Teacher(TimestampMixin, Base):
     courses: Mapped[list["Course"]] = relationship(
         secondary=course_teachers, back_populates="teachers"
     )
+    detail: Mapped["TeacherBio | None"] = relationship(
+        back_populates="teacher", uselist=False, cascade="all, delete-orphan"
+    )
+
+
+class TeacherBio(TimestampMixin, Base):
+    __tablename__ = "teacher_bios"
+
+    teacher_id: Mapped[int] = mapped_column(
+        ForeignKey("teachers.id", ondelete="CASCADE"), primary_key=True
+    )
+    class_style: Mapped[str | None] = mapped_column(Text)
+    method: Mapped[str | None] = mapped_column(Text)
+    level_text: Mapped[str | None] = mapped_column(Text)
+    problem_solving: Mapped[str | None] = mapped_column(Text)
+    education: Mapped[str | None] = mapped_column(Text)
+    experience: Mapped[str | None] = mapped_column(String(300))
+    note: Mapped[str | None] = mapped_column(Text)
+
+    teacher: Mapped[Teacher] = relationship(back_populates="detail")
 
 
 class Course(TimestampMixin, Base):
@@ -86,9 +117,12 @@ class Course(TimestampMixin, Base):
     subject_id: Mapped[int] = mapped_column(
         ForeignKey("subjects.id", ondelete="RESTRICT"), nullable=False, index=True
     )
-    course_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    course_type: Mapped[str | None] = mapped_column(String(30))
     status: Mapped[str] = mapped_column(
         String(20), nullable=False, server_default="draft"
+    )
+    sort_order: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, server_default="0"
     )
 
     subject: Mapped[Subject] = relationship(back_populates="courses")

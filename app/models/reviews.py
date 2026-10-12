@@ -11,6 +11,7 @@ from sqlalchemy import (
     SmallInteger,
     String,
     Text,
+    false,
     text,
     true,
 )
@@ -59,6 +60,11 @@ class Review(TimestampMixin, Base):
             "status IN ('pending', 'approved', 'rejected', 'hidden')",
             name="status_valid",
         ),
+        CheckConstraint(
+            "user_id IS NOT NULL OR is_imported",
+            name="user_or_imported",
+        ),
+        CheckConstraint("char_length(body) <= 1000", name="body_max_length"),
         Index(
             "uq_reviews_user_teacher_no_course",
             "user_id",
@@ -84,8 +90,8 @@ class Review(TimestampMixin, Base):
         ForeignKey("teachers.id", ondelete="RESTRICT"), nullable=False
     )
     course_id: Mapped[int | None] = mapped_column(Integer)
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT")
     )
     overall_rating: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     title: Mapped[str | None] = mapped_column(String(200))
@@ -97,9 +103,12 @@ class Review(TimestampMixin, Base):
     )
     moderated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     moderation_note: Mapped[str | None] = mapped_column(Text)
+    is_imported: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=false()
+    )
 
     teacher: Mapped[Teacher] = relationship()
-    user: Mapped[User] = relationship()
+    user: Mapped[User | None] = relationship()
     answers: Mapped[list["ReviewAnswer"]] = relationship(
         back_populates="review", cascade="all, delete-orphan", passive_deletes=True
     )

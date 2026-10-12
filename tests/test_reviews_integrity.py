@@ -24,10 +24,9 @@ def make_base(db):
     db.flush()
     return user, teacher, other_teacher, course
 
-
 def make_review(user, teacher, course=None, **kwargs):
     data = dict(
-        user_id=user.id,
+        user_id=user.id if user else None,
         teacher_id=teacher.id,
         course_id=course.id if course else None,
         overall_rating=5,
@@ -85,3 +84,45 @@ def test_teacher_review_and_course_review_can_coexist(db):
         select(func.count()).select_from(Review).where(Review.user_id == user.id)
     )
     assert count == 2
+    
+    
+
+def test_review_without_user_is_rejected_unless_imported(db):
+    _, teacher, _, _ = make_base(db)
+    db.add(make_review(None, teacher, user_id=None))
+    with pytest.raises(IntegrityError):
+        db.flush()
+
+
+def test_imported_review_without_user_is_allowed(db):
+    _, teacher, _, _ = make_base(db)
+    review = make_review(None, teacher, user_id=None, is_imported=True)
+    db.add(review)
+    db.flush()
+    assert review.user_id is None
+
+
+def test_many_imported_reviews_for_same_teacher_are_allowed(db):
+    _, teacher, _, _ = make_base(db)
+    db.add(make_review(None, teacher, user_id=None, is_imported=True))
+    db.add(make_review(None, teacher, user_id=None, is_imported=True))
+    db.flush()
+    count = db.scalar(
+        select(func.count()).select_from(Review).where(Review.teacher_id == teacher.id)
+    )
+    assert count == 2
+
+
+def test_review_body_over_1000_chars_is_rejected(db):
+    user, teacher, _, _ = make_base(db)
+    db.add(make_review(user, teacher, body="x" * 1001))
+    with pytest.raises(IntegrityError):
+        db.flush()
+
+
+def test_review_body_of_exactly_1000_chars_is_allowed(db):
+    user, teacher, _, _ = make_base(db)
+    review = make_review(user, teacher, body="x" * 1000)
+    db.add(review)
+    db.flush()
+    assert len(review.body) == 1000
