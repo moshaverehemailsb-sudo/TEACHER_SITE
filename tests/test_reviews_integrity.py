@@ -6,7 +6,7 @@ from app.models import Course, Review, Subject, Teacher, User
 
 
 def make_base(db):
-    subject = Subject(name="Physics", slug="physics")
+    subject = Subject(name="Test Subject", slug="test-subject")
     teacher = Teacher(slug="t-one", full_name="Teacher One")
     other_teacher = Teacher(slug="t-two", full_name="Teacher Two")
     user = User(display_name="Student", auth_provider="test", auth_subject="u1")

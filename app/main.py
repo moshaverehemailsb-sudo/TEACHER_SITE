@@ -1,0 +1,20 @@
+﻿from fastapi import FastAPI, HTTPException
+from sqlalchemy import text
+
+from app.database import engine
+from app.routers import subjects, teachers
+
+app = FastAPI(title="Baf API", version="0.1.0")
+
+app.include_router(subjects.router, prefix="/api/v1")
+app.include_router(teachers.router, prefix="/api/v1")
+
+
+@app.get("/health")
+def health():
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+    except Exception:
+        raise HTTPException(status_code=503, detail="database unavailable")
+    return {"status": "ok"}
