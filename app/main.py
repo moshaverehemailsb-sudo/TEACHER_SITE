@@ -1,11 +1,20 @@
 ﻿from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from app.config import cors_origins
 from app.database import engine
 from app.errors import ApiError, api_error_handler
 from app.routers import compare, reviews, rivals, subjects, teachers
 
 app = FastAPI(title="Baf API", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins(),
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 app.add_exception_handler(ApiError, api_error_handler)
 app.include_router(subjects.router, prefix="/api/v1")
