@@ -5,9 +5,15 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.deps import get_db
+from app.errors import ApiError
 from app.models import Subject, Teacher, teacher_subjects
-from app.schemas.teachers import TeacherListOut
-from app.services.teacher_cards import build_stats, load_tags, to_card
+from app.schemas.teachers import (
+    BioOut,
+    CourseOut,
+    TeacherListOut,
+    TeacherProfileOut,
+)
+from app.services.teacher_cards import build_stats, load_card, load_tags, to_card
 from app.text import normalize_search
 
 router = APIRouter(tags=["teachers"])
@@ -74,3 +80,45 @@ def list_teachers(
         for teacher, count, rating, rec in rows
     ]
     return TeacherListOut(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/teachers/{teacher_id}", response_model=TeacherProfileOut)
+def get_teacher(teacher_id: int, db: Session = Depends(get_db)):
+    teacher = db.scalar(
+        select(Teacher)
+        .where(Teacher.id == teacher_id, Teacher.is_active.is_(True))
+        .options(
+            selectinload(Teacher.subjects),
+            selectinload(Teacher.detail),
+            selectinload(Teacher.courses),
+        )
+    )
+    if teacher is None:
+        raise ApiError(404, "TEACHER_NOT_FOUND", "استاد پیدا نشد.")
+
+    card = load_card(db, teacher)
+    bio = teacher.detail
+    courses = sorted(
+        (c for c in teacher.courses if c.status == "published"),
+        key=lambda c: (c.sort_order, c.id),
+    )
+    return TeacherProfileOut(
+        **card.model_dump(),
+        bio=(
+            BioOut(
+                class_style=bio.class_style,
+                method=bio.method,
+                level_text=bio.level_text,
+                problem_solving=bio.problem_solving,
+                education=bio.education,
+                experience=bio.experience,
+                note=bio.note,
+            )
+            if bio
+            else None
+        ),
+        courses=[
+            CourseOut(id=c.id, title=c.title, description=c.description)
+            for c in courses
+        ],
+    )

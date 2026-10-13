@@ -24,3 +24,24 @@ class TeacherListOut(CamelModel):
     total: int
     page: int
     page_size: int
+
+
+class BioOut(CamelModel):
+    class_style: str | None
+    method: str | None
+    level_text: str | None
+    problem_solving: str | None
+    education: str | None
+    experience: str | None
+    note: str | None
+
+
+class CourseOut(CamelModel):
+    id: int
+    title: str
+    description: str | None
+
+
+class TeacherProfileOut(TeacherCardOut):
+    bio: BioOut | None
+    courses: list[CourseOut]

@@ -8,15 +8,19 @@ from app.schemas.teachers import TeacherCardOut
 PUBLIC_TAG_SOURCES = ("verified", "student_reported")
 
 
-def build_stats():
+def build_stats(teacher_ids: list[int] | None = None):
     """میانگین نمره و تعداد نظر و درصد توصیه، فقط از نظرهای تأییدشده."""
+    review_filters = [Review.status == "approved"]
+    if teacher_ids is not None:
+        review_filters.append(Review.teacher_id.in_(teacher_ids))
+
     stats = (
         select(
             Review.teacher_id.label("teacher_id"),
             func.count(Review.id).label("review_count"),
             func.avg(Review.overall_rating).label("rating"),
         )
-        .where(Review.status == "approved")
+        .where(*review_filters)
         .group_by(Review.teacher_id)
         .subquery()
     )
@@ -27,7 +31,7 @@ def build_stats():
         )
         .join(ReviewAnswer, ReviewAnswer.review_id == Review.id)
         .join(ReviewQuestion, ReviewQuestion.id == ReviewAnswer.question_id)
-        .where(Review.status == "approved", ReviewQuestion.key == "would_recommend")
+        .where(*review_filters, ReviewQuestion.key == "would_recommend")
         .group_by(Review.teacher_id)
         .subquery()
     )
@@ -70,3 +74,16 @@ def to_card(teacher: Teacher, review_count, rating, recommend, tags: list[str]) 
         review_count=review_count or 0,
         recommend_percent=round(float(recommend)) if recommend is not None else None,
     )
+
+
+def load_card(db: Session, teacher: Teacher) -> TeacherCardOut:
+    stats, recommend = build_stats([teacher.id])
+    review_count, rating, rec = db.execute(
+        select(stats.c.review_count, stats.c.rating, recommend.c.recommend)
+        .select_from(Teacher)
+        .outerjoin(stats, stats.c.teacher_id == Teacher.id)
+        .outerjoin(recommend, recommend.c.teacher_id == Teacher.id)
+        .where(Teacher.id == teacher.id)
+    ).one()
+    tags = load_tags(db, [teacher.id]).get(teacher.id, [])
+    return to_card(teacher, review_count, rating, rec, tags)
