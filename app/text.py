@@ -8,3 +8,7 @@ def normalize_search(text: str) -> str:
     text = text.replace("ي", "ی").replace("ك", "ک")
     text = _SPACES_AND_ZWNJ.sub("", text)
     return text.lower()
+
+
+def slugify_tag(name: str) -> str:
+    return re.sub(r"\s+", "-", name.strip())
