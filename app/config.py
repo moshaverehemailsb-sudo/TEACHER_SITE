@@ -15,3 +15,8 @@ def cors_origins() -> list[str]:
 def admin_token() -> str | None:
     token = os.getenv("ADMIN_TOKEN", "").strip()
     return token or None
+
+
+def secret_key() -> str | None:
+    key = os.getenv("SECRET_KEY", "").strip()
+    return key or None
