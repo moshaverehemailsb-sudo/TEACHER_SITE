@@ -7,12 +7,14 @@ from app.models.catalog import (
     teacher_subjects,
 )
 from app.models.discovery import PopularComparison, SubjectFilterOption, SubjectGroup
+from app.models.login_codes import LoginCode
 from app.models.reviews import Review, ReviewAnswer, ReviewQuestion
 from app.models.tags import Tag, TeacherTag
 from app.models.users import User
 
 __all__ = [
     "Course",
+    "LoginCode",
     "PopularComparison",
     "Review",
     "ReviewAnswer",

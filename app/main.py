@@ -17,6 +17,7 @@ from app.errors import (
 from app.routers import (
     admin_catalog,
     admin_reviews,
+    auth,
     compare,
     reviews,
     rivals,
@@ -30,6 +31,7 @@ ROUTERS = [
     reviews,
     rivals,
     compare,
+    auth,
     admin_reviews,
     admin_catalog,
 ]
@@ -62,7 +64,9 @@ async def security_headers(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
-    if request.url.path.startswith("/api/v1/admin"):
+    if request.url.path.startswith("/api/v1/admin") or request.url.path.startswith(
+        "/api/v1/auth"
+    ):
         response.headers["Cache-Control"] = "no-store"
     return response
 

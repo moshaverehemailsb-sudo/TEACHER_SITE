@@ -20,3 +20,12 @@ def admin_token() -> str | None:
 def secret_key() -> str | None:
     key = os.getenv("SECRET_KEY", "").strip()
     return key or None
+
+
+def phone_hash_key() -> str | None:
+    key = os.getenv("PHONE_HASH_KEY", "").strip()
+    return key or None
+
+
+def sms_provider() -> str:
+    return os.getenv("SMS_PROVIDER", "").strip().lower()

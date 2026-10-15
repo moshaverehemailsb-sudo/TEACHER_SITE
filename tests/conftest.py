@@ -7,16 +7,18 @@ from app.database import engine
 from app.deps import get_db
 from app.main import app
 from app.models import User
-from app.ratelimit import review_limiter
+from app.ratelimit import ALL_LIMITERS
 
 TEST_SECRET = "test-secret-key-that-is-long-enough-for-hs256"
 
 
 @pytest.fixture(autouse=True)
 def _reset_rate_limits():
-    review_limiter.reset()
+    for limiter in ALL_LIMITERS:
+        limiter.reset()
     yield
-    review_limiter.reset()
+    for limiter in ALL_LIMITERS:
+        limiter.reset()
 
 
 @pytest.fixture()

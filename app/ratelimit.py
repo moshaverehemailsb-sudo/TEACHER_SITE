@@ -33,3 +33,9 @@ class RateLimiter:
 
 # حداکثر ۵ نظر در ساعت برای هر کاربر
 review_limiter = RateLimiter(max_calls=5, window_seconds=3600)
+# حداکثر ۱۰ درخواست کد در ساعت برای هر IP
+code_ip_limiter = RateLimiter(max_calls=10, window_seconds=3600)
+# حداکثر ۳۰ تلاش تأیید در ۱۰ دقیقه برای هر IP
+verify_ip_limiter = RateLimiter(max_calls=30, window_seconds=600)
+
+ALL_LIMITERS = [review_limiter, code_ip_limiter, verify_ip_limiter]
