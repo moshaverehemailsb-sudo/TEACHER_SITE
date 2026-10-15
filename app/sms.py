@@ -1,6 +1,6 @@
 ﻿from typing import Protocol
 
-from app.config import sms_provider
+from app.config import app_env, sms_provider
 from app.errors import ApiError
 
 
@@ -21,6 +21,6 @@ class ConsoleSender:
 
 def get_sms_sender() -> SmsSender:
     provider = sms_provider()
-    if provider == "console":
+    if provider == "console" and app_env() == "development":
         return ConsoleSender()
     raise ApiError(503, "SMS_DISABLED", "ارسال پیامک فعال نیست.")

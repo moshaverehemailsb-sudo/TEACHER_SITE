@@ -29,3 +29,7 @@ def phone_hash_key() -> str | None:
 
 def sms_provider() -> str:
     return os.getenv("SMS_PROVIDER", "").strip().lower()
+
+
+def app_env() -> str:
+    return os.getenv("APP_ENV", "production").strip().lower()

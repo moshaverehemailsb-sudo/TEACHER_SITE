@@ -44,6 +44,8 @@ FastAPI + SQLAlchemy 2 + Alembic + PostgreSQL.
 | `SECRET_KEY` | کلید امضای توکن ورود کاربر. اگر عوض شود همه‌ی توکن‌ها بی‌اعتبار می‌شوند |
 | `PHONE_HASH_KEY` | کلید هش شماره‌ی موبایل. **هرگز عوضش نکن**، وگرنه همه‌ی کاربران قبلی «جدید» حساب می‌شوند |
 | `SMS_PROVIDER` | روش ارسال پیامک. `console` فقط برای توسعه است (کد در ترمینال چاپ می‌شود). خالی یعنی ارسال پیامک غیرفعال (`SMS_DISABLED`) |
+| `APP_ENV` | `development` یا `production` (پیش‌فرض `production`). `SMS_PROVIDER=console` فقط وقتی کار می‌کند که این `development` باشد |
+| `FORWARDED_ALLOW_IPS` | پشت پروکسی معکوس: آدرس IP پروکسی. تنظیم درست آن لازم است تا محدودیت تعداد درخواست IP واقعی کاربر را ببیند |
 
 رمزهای `ADMIN_TOKEN` و `SECRET_KEY` و `PHONE_HASH_KEY` را با این دستور بساز:
 
@@ -172,6 +174,7 @@ pytest -v
 | `SETUP_INCOMPLETE` | 500 | داده‌ی اولیه کامل نیست (`app.seed` اجرا نشده) |
 | `SMS_FAILED` | 502 | ارسال پیامک ناموفق بود |
 | `ADMIN_DISABLED` / `AUTH_DISABLED` / `SMS_DISABLED` | 503 | بخش مربوطه تنظیم نشده است |
+| `INTERNAL_ERROR` | 500 | خطای پیش‌بینی‌نشده‌ی سرور (شناسه‌ی `X-Request-ID` را برای پیدا کردن لاگ نگه دار) |
 
 ## تصمیم‌ها و فرض‌ها
 
@@ -182,6 +185,22 @@ pytest -v
 - نظر جدید باید کاربر داشته باشد؛ فقط نظرهای واردشده (`is_imported`) بدون کاربر مجازند.
 - `photoUrl` همان مسیر نسبی فرانت (`assets/teachers/{id}.jpg`) است و فرانت آن را باز می‌کند.
 - محدودیت تعداد درخواست فعلاً در حافظه‌ی همان پردازش است. برای چند سرور باید به Redis منتقل شود.
+
+## اجرا با Docker (توسعه‌ی محلی)
+
+```powershell
+docker compose up --build
+docker compose exec api python -m app.seed
+docker compose exec api python -m app.import_baf
+```
+
+دیتابیس داخل compose رمز ثابت `baf` دارد و فقط برای توسعه است. مایگریشن‌ها هنگام بالا آمدن کانتینر خودکار اجرا می‌شوند.
+
+## نگهداری
+
+- هر پاسخ هدر `X-Request-ID` دارد و لاگ سرور همان شناسه را با روش، مسیر، وضعیت و زمان درخواست می‌نویسد. بدنه و query هرگز لاگ نمی‌شوند.
+- کدهای ورود قدیمی را روزی یک‌بار پاک کن: `python -m app.cleanup`.
+- خطای ۵۰۰ هم‌قالب بقیه‌ی خطاهاست: `INTERNAL_ERROR`.
 
 ## هنوز ساخته نشده
 
