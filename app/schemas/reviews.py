@@ -1,9 +1,24 @@
-﻿from datetime import datetime
-from typing import Annotated, Literal
+﻿import re
+from datetime import datetime
+from typing import Annotated
 
-from pydantic import Field, StringConstraints
+from pydantic import Field, StringConstraints, field_validator
 
 from app.schemas.teachers import CamelModel
+
+REVIEWER_LABELS = [
+    "دانش\u200cآموز پایه دهم",
+    "دانش\u200cآموز پایه یازدهم",
+    "دانش\u200cآموز پایه دوازدهم",
+    "فارغ\u200cالتحصیل",
+]
+
+
+def _label_key(text: str) -> str:
+    return re.sub(r"[\s\u200c]+", "", text)
+
+
+_CANONICAL = {_label_key(label): label for label in REVIEWER_LABELS}
 
 
 class ReviewOut(CamelModel):
@@ -23,17 +38,21 @@ class ReviewListOut(CamelModel):
 
 
 class ReviewIn(CamelModel):
-    reviewer_label: Literal[
-        "دانش‌آموز پایه دهم",
-        "دانش‌آموز پایه یازدهم",
-        "دانش‌آموز پایه دوازدهم",
-        "فارغ‌التحصیل",
-    ]
+    reviewer_label: str
     stars: int = Field(ge=1, le=5)
     recommends: bool
     body: Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)
     ]
+
+    @field_validator("reviewer_label", mode="before")
+    @classmethod
+    def canonical_label(cls, value):
+        if isinstance(value, str):
+            label = _CANONICAL.get(_label_key(value))
+            if label is not None:
+                return label
+        raise ValueError("وضعیت تحصیلی نامعتبر است.")
 
 
 class ReviewCreatedOut(CamelModel):
