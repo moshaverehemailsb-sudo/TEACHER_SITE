@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.config import cors_origins
+from app.config import cors_origins, frontend_dir
 from app.database import engine
 from app.errors import (
     ApiError,
@@ -18,6 +18,7 @@ from app.errors import (
     http_error_handler,
     validation_error_handler,
 )
+from app.frontend import mount_frontend
 from app.logging_config import setup_logging
 from app.routers import (
     admin_catalog,
@@ -128,3 +129,7 @@ def health():
     except Exception:
         return JSONResponse(status_code=503, content={"status": "unavailable"})
     return {"status": "ok"}
+
+
+# باید آخرین مورد باشد: همه‌ی مسیرهای دیگر را (غیر از API) به فرانت می‌دهد
+mount_frontend(app, frontend_dir())

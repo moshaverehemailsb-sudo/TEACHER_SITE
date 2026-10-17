@@ -33,3 +33,7 @@ def sms_provider() -> str:
 
 def app_env() -> str:
     return os.getenv("APP_ENV", "production").strip().lower()
+
+
+def frontend_dir() -> str:
+    return os.getenv("FRONTEND_DIR", "").strip()

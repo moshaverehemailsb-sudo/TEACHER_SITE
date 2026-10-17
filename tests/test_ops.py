@@ -2,6 +2,7 @@
 
 import pytest
 from fastapi.testclient import TestClient
+from fastapi.routing import APIRoute
 
 from app.cleanup import delete_old_codes
 from app.main import app
@@ -38,11 +39,12 @@ def test_unhandled_error_returns_error_format():
     def boom():
         raise RuntimeError("boom")
 
-    app.add_api_route("/__boom__", boom)
+    route = APIRoute("/__boom__", boom, methods=["GET"])
+    app.router.routes.insert(0, route)
     try:
         response = TestClient(app).get("/__boom__")
     finally:
-        app.router.routes.pop()
+        app.router.routes.remove(route)
     assert response.status_code == 500
     assert response.json()["error"]["code"] == "INTERNAL_ERROR"
     assert "x-request-id" in response.headers
