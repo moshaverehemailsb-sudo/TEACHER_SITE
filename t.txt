@@ -1,0 +1,1 @@
+﻿$env:DATABASE_URL="postgresql+psycopg://neondb_owner:npg_6C5aDrknlOLM@ep-long-star-b473027x-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require" alembic upgrade head python -m app.seed python -m app.import_baf Remove-Item Env:DATABASE_URL

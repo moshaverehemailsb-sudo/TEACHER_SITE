@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.config import phone_hash_key, secret_key
+from app.config import phone_hash_key, secret_key, sms_daily_limit
 from app.errors import ApiError
 from app.models import LoginCode, User
 from app.phone import phone_hash
@@ -59,6 +59,19 @@ def request_code(db: Session, phone: str, sender: SmsSender) -> None:
     if recent >= MAX_CODES_PER_HOUR:
         raise ApiError(
             429, "RATE_LIMITED", "تعداد درخواست‌ها زیاد است؛ کمی بعد دوباره تلاش کن."
+        )
+
+    # سقف کلی کل سایت در ۲۴ ساعت، برای جلوگیری از خرج شدن اعتبار پیامک
+    daily = db.scalar(
+        select(func.count())
+        .select_from(LoginCode)
+        .where(LoginCode.created_at > now - timedelta(hours=24))
+    )
+    if daily >= sms_daily_limit():
+        raise ApiError(
+            503,
+            "SMS_LIMIT_REACHED",
+            "سقف ارسال پیامک امروز پر شده؛ فردا دوباره تلاش کن.",
         )
 
     code = f"{secrets.randbelow(1_000_000):06d}"

@@ -1,13 +1,30 @@
-﻿import pytest
-from sqlalchemy.orm import Session
+﻿import os
 
-import app.models  # noqa: F401
-from app.auth import create_access_token
-from app.database import engine
-from app.deps import get_db
-from app.main import app
-from app.models import User
-from app.ratelimit import ALL_LIMITERS
+import pytest
+from dotenv import load_dotenv
+
+load_dotenv()
+
+_main_url = os.getenv("DATABASE_URL", "").strip()
+_test_url = os.getenv("TEST_DATABASE_URL", "").strip()
+if not _test_url:
+    pytest.exit(
+        "TEST_DATABASE_URL is not set. Tests must run on a separate test database.",
+        returncode=2,
+    )
+if _test_url == _main_url:
+    pytest.exit("TEST_DATABASE_URL must differ from DATABASE_URL.", returncode=2)
+os.environ["DATABASE_URL"] = _test_url
+
+from sqlalchemy.orm import Session  # noqa: E402
+
+import app.models  # noqa: E402,F401
+from app.auth import create_access_token  # noqa: E402
+from app.database import engine  # noqa: E402
+from app.deps import get_db  # noqa: E402
+from app.main import app  # noqa: E402
+from app.models import User  # noqa: E402
+from app.ratelimit import ALL_LIMITERS  # noqa: E402
 
 TEST_SECRET = "test-secret-key-that-is-long-enough-for-hs256"
 

@@ -1,0 +1,307 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>مدیریت نظرها | باف</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap">
+    <style>
+        :root {
+            --bg: #f6faf7;
+            --card: #fff;
+            --ink: #17251c;
+            --mut: #5f7568;
+            --line: #b4e0c5;
+            --p: #1f9d57;
+            --bad: #c0392b;
+            --warn: #b7791f
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+            line-height: 1.8
+        }
+
+        main {
+            max-width: 860px;
+            margin: auto;
+            padding: 16px
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 8px 0 14px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 12px
+        }
+
+        input {
+            font: inherit;
+            padding: 9px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--card);
+            color: var(--ink)
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer;
+            border: 1px solid var(--line);
+            background: var(--card);
+            color: var(--ink);
+            border-radius: 10px;
+            padding: 6px 14px;
+            font-size: 13px
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: default
+        }
+
+        button.p,
+        button.tab.on {
+            background: var(--p);
+            border-color: var(--p);
+            color: #fff
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .top {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .mut {
+            color: var(--mut);
+            font-size: 12px
+        }
+
+        .badge {
+            font-size: 11px;
+            border-radius: 8px;
+            padding: 0 9px;
+            border: 1px solid var(--line)
+        }
+
+        .badge.pending {
+            color: var(--warn);
+            border-color: var(--warn)
+        }
+
+        .badge.approved {
+            color: var(--p);
+            border-color: var(--p)
+        }
+
+        .badge.rejected,
+        .badge.hidden {
+            color: var(--bad);
+            border-color: var(--bad)
+        }
+
+        .stars {
+            color: #f0a800
+        }
+
+        .meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            font-size: 13px;
+            margin-top: 4px
+        }
+
+        .body {
+            margin: 8px 0;
+            white-space: pre-wrap;
+            word-break: break-word
+        }
+
+        .acts {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 8px
+        }
+
+        .acts input {
+            flex: 1;
+            min-width: 160px
+        }
+
+        .err {
+            color: var(--bad);
+            font-size: 13px;
+            min-height: 22px;
+            margin-top: 10px
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #123d27;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            display: none
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>مدیریت نظرها</h1>
+
+        <div id="login" class="card" hidden>
+            <label>توکن مدیر (مقدار ADMIN_TOKEN در فایل .env)<br>
+                <input id="tok" type="password" autocomplete="off" dir="ltr" style="width:100%;margin-top:6px"></label>
+            <div style="margin-top:10px"><button class="p" id="go">ورود</button></div>
+        </div>
+
+        <div id="panel" hidden>
+            <div class="top">
+                <div class="tabs" id="tabs"></div><button id="out" style="margin-right:auto">خروج</button>
+            </div>
+            <div class="mut" id="count" style="margin-top:8px"></div>
+            <div id="list"></div>
+            <button id="more" style="display:none;margin:14px auto 0">نمایش بیشتر</button>
+        </div>
+
+        <div class="err" id="err" role="alert"></div>
+        <div class="toast" id="toast"></div>
+    </main>
+
+    <script>
+        const API = '/api/v1/admin', KEY = 'baf_admin_token';
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const fa = n => Number(n).toLocaleString('fa-IR');
+        const STATUS = { pending: 'در انتظار', approved: 'تأییدشده', rejected: 'ردشده', hidden: 'مخفی' };
+        const TABS = [['pending', 'در انتظار'], ['approved', 'تأییدشده'], ['rejected', 'ردشده'], ['hidden', 'مخفی'], ['all', 'همه']];
+        const ACTIONS = {
+            pending: [['approved', 'تأیید', 'p'], ['rejected', 'رد', ''], ['hidden', 'مخفی', '']],
+            approved: [['hidden', 'مخفی کردن', ''], ['rejected', 'رد', ''], ['pending', 'بازگشت به صف', '']],
+            rejected: [['approved', 'تأیید', 'p'], ['hidden', 'مخفی', ''], ['pending', 'بازگشت به صف', '']],
+            hidden: [['approved', 'تأیید', 'p'], ['rejected', 'رد', ''], ['pending', 'بازگشت به صف', '']]
+        };
+        let token = sessionStorage.getItem(KEY) || '';
+        let state = { status: 'pending', items: [], total: 0, page: 0, busy: false };
+
+        const err = m => { $('err').textContent = m || '' };
+        let tt; function toast(m) { const e = $('toast'); e.textContent = m; e.style.display = 'block'; clearTimeout(tt); tt = setTimeout(() => e.style.display = 'none', 2000) }
+
+        async function call(path, opt = {}) {
+            let res;
+            try {
+                res = await fetch(API + path, {
+                    method: opt.method || 'GET',
+                    headers: Object.assign({ Authorization: 'Bearer ' + token }, opt.body ? { 'Content-Type': 'application/json' } : {}),
+                    body: opt.body ? JSON.stringify(opt.body) : undefined
+                });
+            } catch (e) { throw new Error('اتصال به سرور برقرار نشد. این صفحه را از همان آدرس بک‌اند باز کن (مثلاً http://127.0.0.1:8000/admin.html).') }
+            let data = null; try { data = await res.json() } catch (e) { }
+            if (!res.ok) {
+                if (res.status === 401) logout(true);
+                if (res.status === 404 && !data) throw new Error('آدرس API پیدا نشد. این صفحه را از آدرس بک‌اند باز کن.');
+                throw new Error((data && data.error && data.error.message) || 'خطایی رخ داد.');
+            }
+            return data;
+        }
+
+        function card(r) {
+            const acts = (ACTIONS[r.status] || []).map(([s, l, c]) => `<button class="${c}" data-id="${+r.id}" data-status="${s}">${l}</button>`).join('');
+            const rec = r.recommends == null ? '' : r.recommends ? '👍 توصیه می‌کند' : '👎 توصیه نمی‌کند';
+            return `<article class="card"><div class="top"><b>${esc(r.teacherName)}</b><span class="badge ${esc(r.status)}">${esc(STATUS[r.status] || r.status)}</span>${r.isImported ? '<span class="badge">واردشده</span>' : ''}<a class="mut" href="/#/t/${+r.teacherId}" target="_blank" rel="noopener">مشاهده استاد</a></div>
+ <div class="meta"><span class="stars">${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}</span><span>${esc(r.reviewerLabel || '')}</span><span>${rec}</span><span class="mut">${new Date(r.createdAt).toLocaleString('fa-IR')}</span></div>
+ <p class="body">${esc(r.body)}</p>
+ ${r.moderationNote ? `<div class="mut">یادداشت: ${esc(r.moderationNote)}</div>` : ''}
+ <div class="acts"><input id="note-${+r.id}" maxlength="1000" placeholder="یادداشت داخلی (اختیاری)">${acts}</div></article>`;
+        }
+
+        function render() {
+            $('login').hidden = !!token; $('panel').hidden = !token;
+            if (!token) return;
+            $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === state.status ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('');
+            $('count').textContent = state.busy && !state.items.length ? 'در حال بارگذاری...' : fa(state.total) + ' نظر';
+            $('list').innerHTML = state.items.length ? state.items.map(card).join('') : (state.busy ? '' : '<div class="card mut">نظری در این بخش نیست.</div>');
+            const m = $('more'); m.style.display = state.items.length < state.total ? 'block' : 'none'; m.disabled = state.busy;
+        }
+
+        async function load(reset) {
+            if (state.busy) return;
+            state.busy = true;
+            if (reset) state = { status: state.status, items: [], total: 0, page: 0, busy: true };
+            err(''); render();
+            const page = reset ? 1 : state.page + 1;
+            try {
+                const d = await call(`/reviews?status=${state.status}&page=${page}&pageSize=20`);
+                state.items = reset ? d.items : state.items.concat(d.items); state.total = d.total; state.page = d.page;
+            } catch (e) { err(e.message) }
+            state.busy = false; render();
+        }
+
+        async function moderate(id, status, btn) {
+            const field = $('note-' + id), note = field ? field.value.trim() : '';
+            btn.disabled = true; err('');
+            try {
+                const updated = await call('/reviews/' + id, { method: 'PATCH', body: { status, note: note || null } });
+                if (state.status === 'all') { const i = state.items.findIndex(r => r.id === id); if (i >= 0) state.items[i] = updated }
+                else { state.items = state.items.filter(r => r.id !== id); state.total = Math.max(0, state.total - 1) }
+                toast('انجام شد: ' + STATUS[status]);
+            } catch (e) { err(e.message) }
+            render();
+        }
+
+        function login() {
+            const v = $('tok').value.trim();
+            if (!v) return err('توکن را وارد کن.');
+            token = v; sessionStorage.setItem(KEY, v); $('tok').value = '';
+            state.status = 'pending'; load(true);
+        }
+        function logout(expired) {
+            token = ''; sessionStorage.removeItem(KEY); state = { status: 'pending', items: [], total: 0, page: 0, busy: false };
+            render(); err(expired ? 'توکن نامعتبر است.' : '');
+        }
+
+        $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { state.status = b.dataset.tab; load(true) } });
+        $('list').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) moderate(+b.dataset.id, b.dataset.status, b) });
+        $('more').onclick = () => load(false);
+        $('go').onclick = login;
+        $('tok').addEventListener('keydown', e => { if (e.key === 'Enter') login() });
+        $('out').onclick = () => logout(false);
+
+        if (token) load(true); else render();
+    </script>
+</body>
+
+</html>
