@@ -12,9 +12,22 @@ if not _test_url:
         "TEST_DATABASE_URL is not set. Tests must run on a separate test database.",
         returncode=2,
     )
-if _test_url == _main_url:
-    pytest.exit("TEST_DATABASE_URL must differ from DATABASE_URL.", returncode=2)
+
+from sqlalchemy.engine import make_url  # noqa: E402
+
+
+def _target(url):
+    parsed = make_url(url)
+    return (parsed.host, parsed.port, parsed.database)
+
+
+if _main_url and _target(_test_url) == _target(_main_url):
+    pytest.exit("TEST_DATABASE_URL points to the main database.", returncode=2)
+
+# تست‌ها نباید به تنظیمات .env وابسته باشند و پیامک واقعی بفرستند
 os.environ["DATABASE_URL"] = _test_url
+for _name in ("FRONTEND_DIR", "SMS_PROVIDER", "SMS_API_KEY", "SMS_SENDER"):
+    os.environ[_name] = ""
 
 from sqlalchemy.orm import Session  # noqa: E402
 
