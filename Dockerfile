@@ -1,7 +1,8 @@
 ﻿FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    FRONTEND_DIR=/srv/frontend
 
 WORKDIR /srv
 
@@ -11,11 +12,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY alembic.ini .
 COPY migrations ./migrations
 COPY app ./app
+COPY frontend ./frontend
 
 RUN useradd --system --no-create-home appuser
 USER appuser
 
 EXPOSE 8000
 
-# مایگریشن‌ها هنگام راه‌اندازی اجرا می‌شوند، بعد سرور بالا می‌آید
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]

@@ -24,3 +24,9 @@ assets/teachers/   <teacher-id>.jpg
 - هر متنی که از API می‌آید قبل از گذاشتن در `innerHTML` با `esc()` (در `utils.js`) امن می‌شود. هر جای جدیدی هم که متن API را نشان می‌دهی همین کار را بکن.
 - توکن ورود در `localStorage` ذخیره می‌شود (کلید `baf_token`).
 - عکس استادها مسیر نسبی `assets/teachers/<id>.jpg` است و از همین پروژه باز می‌شود.
+
+
+cd C:\Users\ASUS\Desktop\TECHERS_SITE
+mkdir frontend
+Copy-Item -Recurse "C:\Users\ASUS\Desktop\TECHERS_SITE\baf\*" frontend\ -Exclude .git
+dir frontend

@@ -31,6 +31,14 @@ def sms_provider() -> str:
     return os.getenv("SMS_PROVIDER", "").strip().lower()
 
 
+def sms_api_key() -> str:
+    return os.getenv("SMS_API_KEY", "").strip()
+
+
+def sms_sender() -> str:
+    return os.getenv("SMS_SENDER", "").strip()
+
+
 def app_env() -> str:
     return os.getenv("APP_ENV", "production").strip().lower()
 
@@ -69,4 +77,6 @@ def config_warnings() -> list[str]:
         warnings.append("SMS_PROVIDER is not set: SMS codes cannot be sent.")
     if production and sms_provider() == "console":
         warnings.append("SMS_PROVIDER=console does not work in production.")
+    if sms_provider() == "kavenegar" and not (sms_api_key() and sms_sender()):
+        warnings.append("SMS_API_KEY and SMS_SENDER are required for kavenegar.")
     return warnings

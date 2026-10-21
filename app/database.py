@@ -1,11 +1,23 @@
 ﻿import os
+
 from dotenv import load_dotenv
 from sqlalchemy import MetaData, create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+
+def normalize_database_url(url: str) -> str:
+    """Railway و بعضی سرویس‌ها آدرس را با postgres:// یا postgresql:// می‌دهند؛
+    درایور ما psycopg است."""
+    url = url.strip()
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
+DATABASE_URL = normalize_database_url(os.getenv("DATABASE_URL", ""))
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL در فایل .env پیدا نشد")
 
